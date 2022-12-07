@@ -25,7 +25,8 @@ drug_use = pd.read_csv(f'{din}/test_6800_metformin_use.csv', header=None)
 with open(f'{din}/test_6800_metformin_use_colnames.txt', 'r') as f:
     lines = f.readlines()
 
-colnames = [line.strip() for line in lines]
+# colnames = [line.strip() for line in lines]
+colnames = lines[0].split()
 colnames.remove('diagnosis')
 for i in range(len(colnames)):
     if colnames[i]=='total_mamography_before':
