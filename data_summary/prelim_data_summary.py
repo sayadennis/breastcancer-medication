@@ -1,13 +1,15 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
 
 ## Load data 
-dn = '/share/fsmresfiles/breastcancer_medication/'
+din = '/share/fsmresfiles/breastcancer_medication/data/01_ssms'
+dout = '/share/fsmresfiles/breastcancer_medication/plots'
 
-data = pd.read_csv(f'{dn}/6800_cohort.csv', header=None)
+data = pd.read_csv(f'{din}/6800_cohort.csv', header=None)
 
-with open(f'{dn}/6800_cohort_colnames.txt', 'r') as f:
+with open(f'{din}/6800_cohort_colnames.txt', 'r') as f:
     lines = f.readlines()
 
 colnames = [line.strip() for line in lines]
@@ -18,9 +20,9 @@ for i in range(len(colnames)):
 
 data.columns = colnames
 
-drug_use = pd.read_csv(f'{dn}/test_6800_metformin_use.csv', header=None)
+drug_use = pd.read_csv(f'{din}/test_6800_metformin_use.csv', header=None)
 
-with open(f'{dn}/test_6800_metformin_use_colnames.txt', 'r') as f:
+with open(f'{din}/test_6800_metformin_use_colnames.txt', 'r') as f:
     lines = f.readlines()
 
 colnames = [line.strip() for line in lines]
@@ -67,4 +69,54 @@ data['biologic_category'] = biol_cat
 pd.crosstab(data.metformin_use, data.biologic_category)
 pd.crosstab(data.metformin_use, data.recurrence)
 
-## Plot distributions of tumor characteristics summary 
+## Plot distributions of features of interest, separated by recurrence status (outcome) 
+
+# Age at diagnosis 
+fig, ax = plt.subplots(5,1, figsize=(4,8))
+cmap = matplotlib.cm.get_cmap('Pastel1')
+ax[0].hist(data.age_at_diagnosis, bins=20, color='gray', label='All')
+ax[0].set_xlim((np.min(data.age_at_diagnosis), np.max(data.age_at_diagnosis)))
+# ax[0].set_title(f'All patients combined')
+ax[0].legend()
+
+for i, recur_status in enumerate(['None', 'Local', 'Distant', 'Both']):
+    ax[i+1].hist(
+        data.iloc[data.recurrence.values==recur_status,:].age_at_diagnosis, 
+        bins=20, color=cmap(i), label=recur_status # , alpha=0.25
+    )
+    ax[i+1].set_xlim((np.min(data.age_at_diagnosis), np.max(data.age_at_diagnosis)))
+    ax[i+1].legend()
+    # ax[i+1].set_title(f'Recurrence status: {recur_status}')
+
+ax[2].set_ylabel('Number of patients')
+ax[4].set_xlabel('Age')
+fig.suptitle('Age at Dx: by Recurrence Status')
+plt.tight_layout()
+fig.savefig(f'{dout}/histogram_age_at_dx.png')
+plt.close()
+
+# biologic subtype 
+pd.crosstab(data.biologic_category, data.recurrence)
+
+# histology 
+def hist_cat(row):
+    if row['Histology']=='DUCT':
+        if row['Invasive']=='YES':
+            return 'IDC'
+        else:
+            return 'DCIS'
+    elif row['Histology']=='LOBULAR':
+        if row['Invasive']=='YES':
+            return 'ILC'
+        else:
+            return 'LCIS'
+    else:
+        if row['Invasive']=='YES':
+            return 'Mixed Invasive'
+        else:
+            return 'Mixed Noninvasive'
+
+data['histology_category'] = data.apply(hist_cat, axis=1)
+pd.crosstab(data.histology_category, data.recurrence)
+
+# drug (metformin, statin) use status (as determined by current method) 
