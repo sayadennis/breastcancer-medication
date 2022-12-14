@@ -66,7 +66,7 @@ for bm_cat in bm_cats:
         ).fillna(0).to_numpy()
         # perform LR analysis 
         or_mean, ci = get_oddsratio_ci(X, y)
-        record_ors.loc[med, bm_cat] = f'{or_mean[0]:.4f} (95% CI {ci[0][0]:.4f}-{ci[0][1]:.4f})'
+        record_ors.loc[med, bm_cat] = f'{or_mean[0]:.2f} ({ci[0][0]:.2f}-{ci[0][1]:.2f})'
 
 record_ors.to_csv(f'{dout}/logistic_oddsratio_biomarkercategory.csv', index=True)
 
@@ -87,6 +87,22 @@ for erpr_cat in erpr_cats:
         ).fillna(0).to_numpy()
         # perform LR analysis 
         or_mean, ci = get_oddsratio_ci(X, y)
-        record_ors.loc[med, erpr_cat] = f'{or_mean[0]:.4f} (95% CI {ci[0][0]:.4f}-{ci[0][1]:.4f})'
+        record_ors.loc[med, erpr_cat] = f'{or_mean[0]:.2f} ({ci[0][0]:.2f}-{ci[0][1]:.2f})'
 
 record_ors.to_csv(f'{dout}/logistic_oddsratio_erpr_category.csv', index=True)
+
+## Do the same, but further stratify for menopausal status 
+for meno_status in ['pre', 'post']:
+    erpr_cats = ['ER/PR+', 'ER/PR-']
+    record_ors = pd.DataFrame(None, index=meds, columns=erpr_cats)
+    for erpr_cat in erpr_cats:
+        sub_data = data.iloc[((data.er_pr.values==erpr_cat) & (data.menopause_status.values==meno_status)),:]
+        for med in meds:
+            X = sub_data[f'using_{med}'].to_numpy(dtype=float).reshape(-1,1)
+            y = sub_data['recurrence'].map(
+                {'None' : 0, 'Both' : 1, 'Local' : 1, 'Distant' : 1}
+            ).fillna(0).to_numpy()
+            # perform LR analysis 
+            or_mean, ci = get_oddsratio_ci(X, y)
+            record_ors.loc[med, erpr_cat] = f'{or_mean[0]:.2f} ({ci[0][0]:.2f}-{ci[0][1]:.2f})'
+    record_ors.to_csv(f'{dout}/logistic_oddsratio_erpr_category_{meno_status}menopausal.csv', index=True)
