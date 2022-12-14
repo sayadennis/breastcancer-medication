@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 ## Load data 
-din = '/share/fsmresfiles/breastcancer_medication/data/01_ssms'
-dout = '/share/fsmresfiles/breastcancer_medication/plots'
+din = '/share/fsmresfiles/breast_cancer_medication/data/01_ssms'
+dout = '/share/fsmresfiles/breast_cancer_medication/plots'
 
 data = pd.read_csv(f'{din}/6800_cohort.csv', header=None)
 
